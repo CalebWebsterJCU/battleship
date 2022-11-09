@@ -1,3 +1,3 @@
 # battleship
 
-I create a game of battleships to practice Clojure and TDD.
+I create a game of battleships to practice Clojure and TDD. Inspired by troyastorino's [battleship](https://github.com/troyastorino/battleship).
