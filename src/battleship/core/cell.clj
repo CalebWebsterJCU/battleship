@@ -1,4 +1,4 @@
-(ns battleship.cell)
+(ns battleship.core.cell)
 
 (defn is-coordinate-valid? [coordinate board-size] (and (< coordinate board-size) (>= coordinate 0)))
 

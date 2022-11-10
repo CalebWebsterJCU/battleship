@@ -1,6 +1,6 @@
-(ns battleship.core-spec
+(ns battleship.core.board-spec
   (:require [speclj.core :refer :all]
-            [battleship.board :refer :all]))
+            [battleship.core.board :refer :all]))
 
 (describe "Battleship"
           (context "Creating Boards:"

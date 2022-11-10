@@ -1,4 +1,4 @@
-(ns battleship.ship
+(ns battleship.core.ship
   (:require [clojure.set :as set]))
 
 (defn ship-occupies-cell? [x-y-pair ship] (contains? ship x-y-pair))
