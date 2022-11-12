@@ -8,10 +8,7 @@
                        (let [board (create-board 1)]
                          (should (is-board-clear? board))
                          (should= 0 (count-ships board))
-                         (should-not (is-cell-shot? [0 0] board))
-                         (should-be-nil (get-ship-here [0 0] board))
-                         )
-                       )
+                         ))
                    )
           (context "Placing Ships:"
                    (it "should throw an exception when trying to place ship in an invalid cell"
