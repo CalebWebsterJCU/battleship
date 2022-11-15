@@ -1,5 +1,6 @@
 (ns battleship.core.ship
-  (:require [clojure.set :as set]))
+  (:require [clojure.set :as set]
+            [battleship.core.cell :as cell]))
 
 (defn ship-occupies-cell? [x-y-pair ship] (contains? ship x-y-pair))
 
@@ -13,10 +14,13 @@
 
 (defn does-ship-collide-with-others? [ship other-ships] (seq (get-ships-that-collide ship other-ships)))
 
-(defn throw-ship-collision-exception [ship1 ship2]
-  (throw (IllegalArgumentException. (str "Cannot place ship at " ship1 "; collides with ship at " ship2)))
+(defn throw-ship-has-no-cells-exception []
+  (throw (RuntimeException. "Cannot deploy ship; ship has no cells"))
   )
 
-(defn throw-exception-with-first-collision-found [ship other-ships]
-  (throw-ship-collision-exception ship (get-first-collision ship other-ships))
-  )
+(defn throw-ship-has-invalid-cells-exception [ship board-size]
+  (throw (RuntimeException. (str "Cannot deploy ship at " ship "; contains invalid cells " (clojure.string/join ", " (cell/find-invalid-cells ship board-size))))))
+
+(defn throw-ship-collides-with-others-exception [ship1 other-ships]
+  (throw (RuntimeException. (str "Cannot deploy ship at " ship1 "; collides with ships at " other-ships))))
+

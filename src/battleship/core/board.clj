@@ -12,19 +12,30 @@
 
 (defn count-ships [board] (count (:ships board)))
 
-(defn deploy-ship-if-no-collisions [ship board]
-  (let [current-ships (:ships board)]
-    (if (not (ship/does-ship-collide-with-others? ship current-ships))
-      (assoc board :ships (conj current-ships ship))
-      (ship/throw-exception-with-first-collision-found ship current-ships)
-      )))
+(defn can-ship-be-deployed? [ship board]
+  (and
+    (seq ship)
+    (cell/are-cells-valid? ship (:size board))
+    (not (ship/does-ship-collide-with-others? ship (:ships board))))
+  )
+
+(defn add-ship-to-board [ship board]
+  (assoc board :ships (conj (:ships board) ship))
+  )
+
+(defn throw-cannot-deploy-ship-exception [ship board]
+  (cond
+    (= 0 (count ship)) (ship/throw-ship-has-no-cells-exception)
+    (not (cell/are-cells-valid? ship (:size board))) (ship/throw-ship-has-invalid-cells-exception ship (:size board))
+    (ship/does-ship-collide-with-others? ship (:ships board)) (ship/throw-ship-collides-with-others-exception ship (:ships board))
+    )
+  )
 
 (defn deploy-ship [ship board]
-  (let [board-size (:size board)]
-   (if (cell/are-cells-valid? ship board-size)
-     (deploy-ship-if-no-collisions ship board)
-     (cell/throw-exception-with-first-invalid-cell-found ship board-size)
-     )))
+  (if (can-ship-be-deployed? ship board)
+    (add-ship-to-board ship board)
+    (throw-cannot-deploy-ship-exception ship board)
+    ))
 
 (defn is-cell-shot? [x-y-pair board]
   (if (cell/is-cell-valid? x-y-pair (:size board))
@@ -34,15 +45,35 @@
 
 (defn are-cells-shot? [cells board] (and (seq cells) (every? #(is-cell-shot? % board) cells)))
 
+(defn can-shoot-cell? [x-y-pair board]
+  (and (not (is-cell-shot? x-y-pair board)) (cell/is-cell-valid? x-y-pair (:size board)))
+  )
+
+(defn add-shot-cell-to-board [x-y-pair board]
+  (assoc board :shot-cells (conj (:shot-cells board) x-y-pair))
+  )
+
+(defn throw-cannot-shoot-cell-exception [x-y-pair board]
+  (cond
+    (is-cell-shot? x-y-pair board) (cell/throw-cell-already-shot-exception x-y-pair)
+    (not (cell/is-cell-valid? x-y-pair (:size board))) (cell/throw-invalid-coordinates-exception x-y-pair)
+    )
+  )
+
 (defn shoot-cell [x-y-pair board]
-  (if (cell/is-cell-valid? x-y-pair (:size board))
-    (assoc board :shot-cells (conj (:shot-cells board) x-y-pair))
-    (cell/throw-invalid-coordinates-exception x-y-pair)
-    ))
+  (if (can-shoot-cell? x-y-pair board)
+    (add-shot-cell-to-board x-y-pair board)
+    (throw-cannot-shoot-cell-exception x-y-pair board)
+    )
+  )
+
+(defn get-ship-occupying-cell [x-y-pair board]
+  (first (filter #(ship/ship-occupies-cell? x-y-pair %) (:ships board)))
+  )
 
 (defn get-ship-here [x-y-pair board]
   (if (cell/is-cell-valid? x-y-pair (:size board))
-    (first (filter #(ship/ship-occupies-cell? x-y-pair %) (:ships board)))
+    (get-ship-occupying-cell x-y-pair board)
     (cell/throw-invalid-coordinates-exception x-y-pair)
     )
   )

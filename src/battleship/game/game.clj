@@ -2,12 +2,13 @@
   (:require [battleship.core.board :as b])
   )
 
+(defn get-current-time [] (.atZone (java.time.Instant/now) (java.time.ZoneId/systemDefault)))
+
 (defn create-game [player1 player2 board-size num-ships]
   {
    :player1    {:name player1 :board (b/create-board board-size)}
    :player2    {:name player2 :board (b/create-board board-size)}
-   :start-time (java.time.Instant/now)
-   :phase      :planning
+   :start-time (get-current-time)
    :whose-turn :player1
    :num-ships  num-ships
    }
@@ -21,110 +22,136 @@
 
 (defn get-opponent-key [player-key] (if (= :player1 player-key) :player2 :player1))
 
-(defn get-opponent [game player-key] (get-player game (get-opponent-key player-key)))
+(defn whose-turn-next? [game] (get-opponent-key (:whose-turn game)))
 
-(defn get-opponent-board [game player-key] (:board (get-opponent game player-key)))
-
-(defn whose-turn-next? [game] (if (is-players-turn? game :player1) :player2 :player1))
-
-(defn throw-not-players-turn-exception [game player-key] (throw (RuntimeException. (str "Cannot perform action; it is not " (:name (player-key game)) "'s turn"))))
-
-(defn throw-cannot-place-ship-during-attack-phase-exception [] (throw (RuntimeException. "Cannot place ship during attack phase")))
-
-(defn throw-cannot-shoot-cell-during-planning-phase-exception [] (throw (RuntimeException. "Cannot shoot cell during planning phase")))
-
-(defn throw-game-is-over-exception [] (throw (RuntimeException. "Cannot perform action; the game is over")))
-
-(defn perform-players-action [game player-key action]
+(defn perform-action [game player-key action]
   (action game player-key)
   )
 
-(defn change-player [game]
+(defn switch-player [game]
   (assoc game :whose-turn (whose-turn-next? game))
   )
 
-(defn get-winner [game]
-  (if (b/are-all-ships-sunk? (get-board game :player1))
-    :player2
-    (if (b/are-all-ships-sunk? (get-board game :player2))
-      :player1
-      nil
-      )
-    ))
-
-(defn is-game-over? [game] (not (nil? (get-winner game))))
-
-(defn perform-players-action-if-players-turn [game player-key action]
-  (if (is-players-turn? game player-key)
-    (perform-players-action game player-key action)
-    (throw-not-players-turn-exception game player-key))
-  )
-
-(defn perform-players-action-if-game-not-over [game player-key action]
-  (if (not (is-game-over? game))
-    (perform-players-action-if-players-turn game player-key action)
-    (throw-game-is-over-exception)
-    ))
-
-(defn perform-players-action-and-change-player [game player-key action]
-  (change-player (perform-players-action-if-game-not-over game player-key action))
-  )
-
-(defn create-ship-deploy-action [ship]
-  (fn [game player-key] (assoc game player-key (assoc (get-player game player-key) :board (b/deploy-ship ship (get-board game player-key)))))
+(defn create-deploy-ship-action [ship]
+  (fn [game player-key]
+    (assoc game player-key (assoc (get-player game player-key) :board (b/deploy-ship ship (get-board game player-key)))))
   )
 
 (defn create-shoot-cell-action [x-y-pair]
-  (fn [game player-key] (assoc game (get-opponent-key player-key) (assoc (get-opponent game player-key) :board (b/shoot-cell x-y-pair (get-opponent-board game player-key)))))
+  (fn [game player-key]
+    (let [opponent-key (get-opponent-key player-key)]
+      (assoc game opponent-key (assoc (get-player game opponent-key) :board (b/shoot-cell x-y-pair (get-board game opponent-key)))))
+    )
   )
 
 (defn has-player-placed-all-ships? [game player-key] (= (:num-ships game) (b/count-ships (get-board game player-key))))
 
-(defn is-planning-phase-over? [game] (and (is-players-turn? game :player1) (has-player-placed-all-ships? game :player1)))
+(defn are-players-ships-sunk? [game player-key]
+  (b/are-all-ships-sunk? (get-board game player-key))
+  )
 
-(defn is-in-attack-phase? [game] (= :attack (:phase game)))
+(defn have-players-placed-all-ships? [game]
+  (and
+    (has-player-placed-all-ships? game :player1)
+    (has-player-placed-all-ships? game :player2)
+    )
+  )
 
-(defn is-in-planning-phase? [game] (= :planning (:phase game)))
+(defn who-lost? [game]
+  (cond
+    (:forfeiter game) (:forfeiter game)
+    (are-players-ships-sunk? game :player1) :player1
+    (are-players-ships-sunk? game :player2) :player2
+    :else nil
+    ))
 
-(defn switch-to-attack-phase [game] (assoc game :phase :attack))
+(defn is-game-over? [game] (not (nil? (who-lost? game))))
 
-(defn set-winner [game winner] (assoc game :winner winner))
+(defn set-game-end-time [game end-time]
+  (assoc game :end-time end-time)
+  )
 
-(defn update-game-phase [game]
-  (if (is-planning-phase-over? game)
-    (switch-to-attack-phase game)
+(defn update-game-end-time [game]
+  (if (is-game-over? game)
+    (set-game-end-time game (get-current-time))
     game
     ))
 
-(defn update-game-state [game]
+(defn who-won? [game]
   (if (is-game-over? game)
-    (set-winner game (get-winner game))
-    (update-game-phase game)
+    (get-opponent-key (who-lost? game))
+    nil
     ))
 
-(defn perform-players-action-and-update-game [game player-key action]
-  (update-game-state (perform-players-action-and-change-player game player-key action))
+(defn throw-not-players-turn-exception [player-name]
+  (throw (RuntimeException. (str player-name " cannot perform this action; it is not their turn"))))
+
+(defn throw-game-is-over-exception [player-name]
+  (throw (RuntimeException. (str player-name " cannot perform this action; the game is over"))))
+
+(defn throw-all-ships-not-deployed-yet-exception [player-name]
+  (throw (RuntimeException. (str player-name " cannot perform this action until all ships have been deployed"))))
+
+(defn throw-all-ships-deployed-exception [player-name]
+  (throw (RuntimeException. (str player-name " cannot perform this action; all ships have been deployed"))))
+
+(defn throw-cannot-take-turn-exception [game player-key]
+  (let [player-name (:name (get-player game player-key))]
+    (cond
+      (is-game-over? game) (throw-game-is-over-exception player-name)
+      (not (is-players-turn? game player-key)) (throw-not-players-turn-exception player-name)
+      (have-players-placed-all-ships? game) (throw-all-ships-deployed-exception player-name)
+      (not (have-players-placed-all-ships? game)) (throw-all-ships-not-deployed-yet-exception player-name)
+      ))
   )
 
+(defn take-players-turn [game player-key action]
+  (-> game
+      (perform-action player-key action)
+      (switch-player)
+      (update-game-end-time)
+      )
+  )
+
+(defn can-player-take-turn? [game player-key]
+  (and
+    (not (is-game-over? game))
+    (is-players-turn? game player-key)
+    ))
+
+(defn can-player-deploy-ship? [game player-key]
+  (and
+    (can-player-take-turn? game player-key)
+    (not (have-players-placed-all-ships? game))
+    ))
+
+(defn can-player-shoot-cell? [game player-key]
+  (and
+    (can-player-take-turn? game player-key)
+    (have-players-placed-all-ships? game)
+    ))
+
 (defn player-deploys-ship [game player-key ship]
-  (let [action (create-ship-deploy-action ship)]
-    (if (is-in-planning-phase? game)
-      (perform-players-action-and-update-game game player-key action)
-      (throw-cannot-place-ship-during-attack-phase-exception)
+  (let [action (create-deploy-ship-action ship)]
+    (if (can-player-deploy-ship? game player-key)
+      (take-players-turn game player-key action)
+      (throw-cannot-take-turn-exception game player-key)
       ))
   )
 
 (defn player-shoots-cell [game player-key x-y-pair]
   (let [action (create-shoot-cell-action x-y-pair)]
-    (if (is-in-attack-phase? game)
-      (perform-players-action-and-update-game game player-key action)
-      (throw-cannot-shoot-cell-during-planning-phase-exception)
-      )))
+    (if (can-player-shoot-cell? game player-key)
+      (take-players-turn game player-key action)
+      (throw-cannot-take-turn-exception game player-key))
+    ))
 
-(defn get-start-year [game] (.getYear (.atZone (:start-time game) (java.time.ZoneId/systemDefault))))
-(defn get-start-month [game] (.getMonth (.atZone (:start-time game) (java.time.ZoneId/systemDefault))))
-(defn get-start-day [game] (.getDayOfWeek (.atZone (:start-time game) (java.time.ZoneId/systemDefault))))
-(defn get-start-hour [game] (.getHour (.atZone (:start-time game) (java.time.ZoneId/systemDefault))))
-(defn get-start-minute [game] (.getMinute (.atZone (:start-time game) (java.time.ZoneId/systemDefault))))
-(defn get-start-second [game] (.getSecond (.atZone (:start-time game) (java.time.ZoneId/systemDefault))))
+(defn player-forfeits-game [game player-key]
+  (assoc game :forfeiter player-key)
+  )
+
+(defn get-start-time [game] (:start-time game))
+
+(defn get-end-time [game] (:end-time game))
+
 
