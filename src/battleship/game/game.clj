@@ -28,20 +28,14 @@
 
 (defn switch-player [game] (assoc game :whose-turn (whose-turn-next? game)))
 
-(defn update-nested-key [object key-path function]
-  (if (= 1 (count key-path))
-    (update object (first key-path) function)
-    (assoc object (first key-path) (update-nested-key ((first key-path) object) (rest key-path) function))
-    ))
-
 (defn create-deploy-ship-action [ship]
   (fn [game player-key]
-    (update-nested-key game [player-key :board] #(b/deploy-ship ship %))
+    (update-in game [player-key :board] #(b/deploy-ship ship %))
     ))
 
 (defn create-shoot-cell-action [x-y-pair]
   (fn [game player-key]
-    (update-nested-key game [(get-opponent-key player-key) :board] #(b/shoot-cell x-y-pair %))
+    (update-in game [(get-opponent-key player-key) :board] #(b/shoot-cell x-y-pair %))
     ))
 
 (defn count-players-ships [game player-key] (b/count-ships (get-board game player-key)))
