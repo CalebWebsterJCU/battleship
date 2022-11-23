@@ -24,31 +24,31 @@
 
 (defn whose-turn-next? [game] (get-opponent-key (:whose-turn game)))
 
-(defn perform-action [game player-key action]
-  (action game player-key)
-  )
+(defn perform-action [game player-key action] (action game player-key))
 
-(defn switch-player [game]
-  (assoc game :whose-turn (whose-turn-next? game))
-  )
+(defn switch-player [game] (assoc game :whose-turn (whose-turn-next? game)))
+
+(defn update-nested-key [object key-path function]
+  (if (= 1 (count key-path))
+    (update object (first key-path) function)
+    (assoc object (first key-path) (update-nested-key ((first key-path) object) (rest key-path) function))
+    ))
 
 (defn create-deploy-ship-action [ship]
   (fn [game player-key]
-    (assoc game player-key (assoc (get-player game player-key) :board (b/deploy-ship ship (get-board game player-key)))))
-  )
+    (update-nested-key game [player-key :board] #(b/deploy-ship ship %))
+    ))
 
 (defn create-shoot-cell-action [x-y-pair]
   (fn [game player-key]
-    (let [opponent-key (get-opponent-key player-key)]
-      (assoc game opponent-key (assoc (get-player game opponent-key) :board (b/shoot-cell x-y-pair (get-board game opponent-key)))))
-    )
-  )
+    (update-nested-key game [(get-opponent-key player-key) :board] #(b/shoot-cell x-y-pair %))
+    ))
 
-(defn has-player-placed-all-ships? [game player-key] (= (:num-ships game) (b/count-ships (get-board game player-key))))
+(defn count-players-ships [game player-key] (b/count-ships (get-board game player-key)))
 
-(defn are-players-ships-sunk? [game player-key]
-  (b/are-all-ships-sunk? (get-board game player-key))
-  )
+(defn has-player-placed-all-ships? [game player-key] (= (:num-ships game) (count-players-ships game player-key)))
+
+(defn are-players-ships-sunk? [game player-key] (b/are-all-ships-sunk? (get-board game player-key)))
 
 (defn have-players-placed-all-ships? [game]
   (and
