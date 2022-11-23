@@ -19,9 +19,7 @@
     (not (ship/does-ship-collide-with-others? ship (:ships board))))
   )
 
-(defn add-ship-to-board [ship board]
-  (assoc board :ships (conj (:ships board) ship))
-  )
+(defn add-ship-to-board [ship board] (update board :ships #(conj % ship)))
 
 (defn throw-cannot-deploy-ship-exception [ship board]
   (cond
@@ -50,7 +48,7 @@
   )
 
 (defn add-shot-cell-to-board [x-y-pair board]
-  (assoc board :shot-cells (conj (:shot-cells board) x-y-pair))
+  (update board :shot-cells #(conj % x-y-pair))
   )
 
 (defn throw-cannot-shoot-cell-exception [x-y-pair board]
