@@ -2,18 +2,16 @@
   (:require [battleship.core.board :as b])
   )
 
-(defn create-game [player1 player2 board-size num-ships]
+(defn create-game [board-size num-ships]
   {
-   :player1    {:name player1 :board (b/create-board board-size)}
-   :player2    {:name player2 :board (b/create-board board-size)}
+   :player1    {:board (b/create-board board-size)}
+   :player2    {:board (b/create-board board-size)}
    :whose-turn :player1
    :num-ships  num-ships
    }
   )
 
-(defn get-player [game player-key] (player-key game))
-
-(defn get-board [game player-key] (:board (get-player game player-key)))
+(defn get-board [game player-key] (get-in game [player-key :board]))
 
 (defn is-players-turn? [game player-key] (= player-key (:whose-turn game)))
 
@@ -64,26 +62,25 @@
     nil
     ))
 
-(defn throw-not-players-turn-exception [player-name]
-  (throw (RuntimeException. (str player-name " cannot perform this action; it is not their turn"))))
+(defn throw-not-players-turn-exception [player-key]
+  (throw (RuntimeException. (str player-key " cannot perform this action; it is not their turn"))))
 
-(defn throw-game-is-over-exception [player-name]
-  (throw (RuntimeException. (str player-name " cannot perform this action; the game is over"))))
+(defn throw-game-is-over-exception [player-key]
+  (throw (RuntimeException. (str player-key " cannot perform this action; the game is over"))))
 
-(defn throw-all-ships-not-deployed-yet-exception [player-name]
-  (throw (RuntimeException. (str player-name " cannot perform this action until all ships have been deployed"))))
+(defn throw-all-ships-not-deployed-yet-exception [player-key]
+  (throw (RuntimeException. (str player-key " cannot perform this action until all ships have been deployed"))))
 
-(defn throw-all-ships-deployed-exception [player-name]
-  (throw (RuntimeException. (str player-name " cannot perform this action; all ships have been deployed"))))
+(defn throw-all-ships-deployed-exception [player-key]
+  (throw (RuntimeException. (str player-key " cannot perform this action; all ships have been deployed"))))
 
 (defn throw-cannot-take-turn-exception [game player-key]
-  (let [player-name (:name (get-player game player-key))]
-    (cond
-      (is-game-over? game) (throw-game-is-over-exception player-name)
-      (not (is-players-turn? game player-key)) (throw-not-players-turn-exception player-name)
-      (have-players-placed-all-ships? game) (throw-all-ships-deployed-exception player-name)
-      (not (have-players-placed-all-ships? game)) (throw-all-ships-not-deployed-yet-exception player-name)
-      ))
+  (cond
+    (is-game-over? game) (throw-game-is-over-exception player-key)
+    (not (is-players-turn? game player-key)) (throw-not-players-turn-exception player-key)
+    (have-players-placed-all-ships? game) (throw-all-ships-deployed-exception player-key)
+    (not (have-players-placed-all-ships? game)) (throw-all-ships-not-deployed-yet-exception player-key)
+    )
   )
 
 (defn take-players-turn [game player-key action]
