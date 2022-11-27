@@ -23,12 +23,6 @@
                 (should-throw RuntimeException
                               (player-shoots-cell game :player2 [0 0]))
                 ))
-          (it "should move to attack stage when enough ships are placed"
-              (let [game (-> (create-game 1 1)
-                             (player-deploys-ship :player1 #{[0 0]})
-                             (player-deploys-ship :player2 #{[0 0]}))]
-                (should (have-players-placed-all-ships? game))
-                ))
           (it "should not allow players to place ships during attack phase"
               (let [game (-> (create-game 2 1)
                              (player-deploys-ship :player1 #{[0 0]})
