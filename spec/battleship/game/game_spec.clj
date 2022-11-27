@@ -18,8 +18,7 @@
           (it "should not allow a player to take a turn twice in a row"
               (let [game (-> (create-game 1 1)
                              (player-deploys-ship :player1 #{[0 0]})
-                             (player-deploys-ship :player2 #{[0 0]})
-                             )]
+                             (player-deploys-ship :player2 #{[0 0]}))]
                 (should-throw RuntimeException
                               (player-shoots-cell game :player2 [0 0]))
                 ))
@@ -35,7 +34,7 @@
                 (should-throw RuntimeException
                               (player-shoots-cell game :player1 [0 0]))
                 ))
-          (it "should be able to provide the winner game ends"
+          (it "should end the game and store the winner when a player sinks all the other player's ships"
               (let [game (-> (create-game 2 2)
                              (player-deploys-ship :player1 #{[0 0]})
                              (player-deploys-ship :player2 #{[0 0]})
