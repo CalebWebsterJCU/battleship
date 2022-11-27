@@ -11,13 +11,6 @@
                 (should-not (is-game-over? game))
                 (should (is-players-turn? game :player1))
                 (should (not (have-players-placed-all-ships? game)))
-                (should= (.getYear (get-current-time)) (.getYear (get-start-time game)))
-                (should= (.getMonth (get-current-time)) (.getMonth (get-start-time game)))
-                (should= (.getDayOfWeek (get-current-time)) (.getDayOfWeek (get-start-time game)))
-                (should= (.getHour (get-current-time)) (.getHour (get-start-time game)))
-                (should= (.getMinute (get-current-time)) (.getMinute (get-start-time game)))
-                (should= (.getSecond (get-current-time)) (.getSecond (get-start-time game)))
-                (should-be-nil (get-end-time game))
                 ))
           (it "should not allow player2 to take the first turn"
               (let [game (create-game "p1" "p2" 1 1)]
@@ -50,7 +43,7 @@
                 (should-throw RuntimeException
                               (player-shoots-cell game :player1 [0 0]))
                 ))
-          (it "should be able to provide the winner and time when the game ends"
+          (it "should be able to provide the winner game ends"
               (let [game (-> (create-game "p1" "p2" 2 2)
                              (player-deploys-ship :player1 #{[0 0]})
                              (player-deploys-ship :player2 #{[0 0]})
@@ -60,12 +53,6 @@
                              (player-shoots-cell :player2 [0 0])
                              (player-shoots-cell :player1 [1 0]))]
                 (should= :player1 (who-won? game))
-                (should= (.getYear (get-current-time)) (.getYear (get-end-time game)))
-                (should= (.getMonth (get-current-time)) (.getMonth (get-end-time game)))
-                (should= (.getDayOfWeek (get-current-time)) (.getDayOfWeek (get-end-time game)))
-                (should= (.getHour (get-current-time)) (.getHour (get-end-time game)))
-                (should= (.getMinute (get-current-time)) (.getMinute (get-end-time game)))
-                (should= (.getSecond (get-current-time)) (.getSecond (get-end-time game)))
                 ))
           (it "should not allow players to take turns when the game is over"
               (let [game (-> (create-game "p1" "p2" 2 2)

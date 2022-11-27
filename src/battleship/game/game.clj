@@ -2,13 +2,10 @@
   (:require [battleship.core.board :as b])
   )
 
-(defn get-current-time [] (.atZone (java.time.Instant/now) (java.time.ZoneId/systemDefault)))
-
 (defn create-game [player1 player2 board-size num-ships]
   {
    :player1    {:name player1 :board (b/create-board board-size)}
    :player2    {:name player2 :board (b/create-board board-size)}
-   :start-time (get-current-time)
    :whose-turn :player1
    :num-ships  num-ships
    }
@@ -61,16 +58,6 @@
 
 (defn is-game-over? [game] (not (nil? (who-lost? game))))
 
-(defn set-game-end-time [game end-time]
-  (assoc game :end-time end-time)
-  )
-
-(defn update-game-end-time [game]
-  (if (is-game-over? game)
-    (set-game-end-time game (get-current-time))
-    game
-    ))
-
 (defn who-won? [game]
   (if (is-game-over? game)
     (get-opponent-key (who-lost? game))
@@ -103,7 +90,6 @@
   (-> game
       (perform-action player-key action)
       (switch-player)
-      (update-game-end-time)
       )
   )
 
@@ -143,9 +129,5 @@
 (defn player-forfeits-game [game player-key]
   (assoc game :forfeiter player-key)
   )
-
-(defn get-start-time [game] (:start-time game))
-
-(defn get-end-time [game] (:end-time game))
 
 
