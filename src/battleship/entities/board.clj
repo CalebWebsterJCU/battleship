@@ -1,4 +1,4 @@
-(ns battleship.core.board
+(ns battleship.entities.board
   (:require [battleship.core.ship :as ship]
             [battleship.core.cell :as cell]))
 

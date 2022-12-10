@@ -1,6 +1,6 @@
-(ns battleship.game.game-spec
+(ns battleship.entities.game-spec
   (:require [speclj.core :refer :all]
-            [battleship.game.game :refer :all]
+            [battleship.entities.game :refer :all]
             ))
 
 (describe "Battleship Game"

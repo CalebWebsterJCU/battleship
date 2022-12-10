@@ -1,4 +1,4 @@
-(ns battleship.core.ship
+(ns battleship.entities.ship
   (:require [clojure.set :as set]
             [battleship.core.cell :as cell]))
 

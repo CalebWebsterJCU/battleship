@@ -1,4 +1,4 @@
-(ns battleship.game.game
+(ns battleship.entities.game
   (:require [battleship.core.board :as b])
   )
 
