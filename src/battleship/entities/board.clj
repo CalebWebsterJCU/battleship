@@ -1,6 +1,6 @@
 (ns battleship.entities.board
-  (:require [battleship.core.ship :as ship]
-            [battleship.core.cell :as cell]))
+  (:require [battleship.entities.ship :as ship]
+            [battleship.entities.cell :as cell]))
 
 (defn has-no-ships? [board] (empty? (:ships board)))
 

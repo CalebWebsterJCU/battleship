@@ -1,13 +1,13 @@
 (ns battleship.entities.game
-  (:require [battleship.core.board :as b])
+  (:require [battleship.entities.board :as b])
   )
 
-(defn create-game [board-size num-ships]
+(defn create-game [board-size max-ships]
   {
    :player1    {:board (b/create-board board-size)}
    :player2    {:board (b/create-board board-size)}
    :whose-turn :player1
-   :num-ships  num-ships
+   :max-ships  max-ships
    }
   )
 
@@ -35,7 +35,7 @@
 
 (defn count-players-ships [game player-key] (b/count-ships (get-board game player-key)))
 
-(defn has-player-placed-all-ships? [game player-key] (= (:num-ships game) (count-players-ships game player-key)))
+(defn has-player-placed-all-ships? [game player-key] (= (:max-ships game) (count-players-ships game player-key)))
 
 (defn are-players-ships-sunk? [game player-key] (b/are-all-ships-sunk? (get-board game player-key)))
 

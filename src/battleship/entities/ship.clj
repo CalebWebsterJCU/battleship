@@ -1,6 +1,6 @@
 (ns battleship.entities.ship
   (:require [clojure.set :as set]
-            [battleship.core.cell :as cell]))
+            [battleship.entities.cell :as cell]))
 
 (defn ship-occupies-cell? [x-y-pair ship] (contains? ship x-y-pair))
 
